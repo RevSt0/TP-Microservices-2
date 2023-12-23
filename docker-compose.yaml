@@ -1,0 +1,58 @@
+version: '3'
+services:
+  eureka-server:
+    image: eureka-server
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+
+  gateway:
+    image: gateway
+    container_name: gateway
+    ports:
+      - "8888:8888"
+    environment:
+      - SPRING_CLOUD_DISCOVERY_ENABLED=true
+      - EUREKA_INSTANCE_HOSTNAME=eureka-server
+    depends_on:
+      - eureka-server
+
+  service-client:
+    image: client-service
+    container_name: client-service
+    ports:
+      - "8081:8081"
+    environment:
+      - SERVER_PORT=8081
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-client:3306/clientservicedb?createDatabaseIfNotExist=true
+    depends_on:
+      - eureka-server
+      - mysql-client
+
+  service-car:
+    image: voiture-service
+    container_name: voiture-service
+    ports:
+      - "8082:8082"
+    environment:
+      - SERVER_PORT=8082
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-car:3306/carservicedb?createDatabaseIfNotExist=true
+    depends_on:
+      - eureka-server
+      - mysql-car
+
+  mysql-car:
+    image: mysql:latest
+    container_name: mysql-car
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=carservicedb
+
+  mysql-client:
+    image: mysql:latest
+    container_name: mysql-client
+    ports:
+      - "3307:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=clientservicedb
